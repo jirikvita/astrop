@@ -15,7 +15,7 @@ import os, sys, getopt
 from collections import OrderedDict
 
 
-def ReadData(fname = 'data.txt'):
+def ReadData(fname = 'data.txt', npow = 3):
     infile = open(fname, 'r')
     gr = ROOT.TGraphErrors()
     ip = 0
@@ -31,14 +31,16 @@ def ReadData(fname = 'data.txt'):
         Jstatdown = Jstatdown*dex
         Jstat = 0.5 * (Jstatup - Jstatdown)
         E = pow(10,logE)
-        gr.SetPoint(ip, E, J*pow(E,3))
-        gr.SetPointError(ip, 0., Jstat*pow(E,3))
+        gr.SetPoint(ip, E, J*pow(E,npow))
+        gr.SetPointError(ip, 0., Jstat*pow(E,npow))
         ip = ip + 1
 
+    gr.SetName('grJE{}'.format(npow))
     gr.SetMarkerStyle(20)
     gr.SetMarkerSize(1.)
     gr.SetMarkerColor(ROOT.kBlack)
     gr.SetLineColor(ROOT.kBlack)
+    infile.close()
     return gr
 cans = []
 stuff = []
@@ -85,9 +87,12 @@ def main(argv):
     print('tag={:}, batch={:}'.format(gTag, gBatch))
 
     ROOT.gStyle.SetPadLeftMargin(0.20)
+
+    fname = 'data.txt'
+    cw, ch = 1200, 800
     
     canname = 'Auger2020'
-    can = ROOT.TCanvas(canname, canname)
+    can = ROOT.TCanvas(canname, canname, 0, 0, cw, ch)
     cans.append(can)
     #filename = 'foo.root'
     #rfile = ROOT.TFile(filename, 'read')
@@ -117,7 +122,7 @@ def main(argv):
     pars['gamma4'] = 5.1 # [8]
 
     hname = 'h2tmp'
-    h2 = ROOT.TH2D(hname, hname + ';E [eV];E^{3} #times J [km^{-2} yr^{-1} sr^{-1} eV^{-1}] ', 100, emin, emax, 100, 0.2e37, 1.e38)
+    h2 = ROOT.TH2D(hname, hname + ';E [eV];E^{3} #times J(E) [ km^{-2} yr^{-1} sr^{-1} eV^{2} ] ', 100, emin, emax, 100, 0.2e37, 1.e38)
     h2.SetStats(0)
     h2.GetYaxis().SetTitleOffset(2.5)
     h2.GetXaxis().SetTitleOffset(1.5)
@@ -141,7 +146,7 @@ def main(argv):
     myfit = fit.Clone('myfit')
     myfit.FixParameter(1, fit.GetParameter(1))
 
-    gr = ReadData()
+    gr = ReadData(fname, 3)
     stuff.append(gr)
     stuff.append(h2)
 
@@ -150,15 +155,29 @@ def main(argv):
     gr.Fit('myfit')
     myfit.Draw('same')
     
-    ROOT.gPad.Update()
+    #ROOT.gPad.Update()
     ROOT.gPad.SetLogy(1)
     ROOT.gPad.SetLogx(1)
     ROOT.gPad.SetGridy(1)
     ROOT.gPad.SetGridx(1)
     ROOT.gPad.Update()
 
-    can.Print(can.GetName() + '.pdf')
-    can.Print(can.GetName() + '.png')
+    canname = 'Auger2020Spect'
+    canspect = ROOT.TCanvas(canname, canname, 400, 400, cw, ch)
+    cans.append(canspect)
+    spect = ReadData(fname, 0)
+    spect.Draw('AP')
+    spect.GetXaxis().SetTitle('E [eV]')
+    spect.GetYaxis().SetTitle('J(E) [ km^{-2} yr^{-1} sr^{-1} eV^{-1} ]')
+    ROOT.gPad.SetLogy(1)
+    ROOT.gPad.SetLogx(1)
+    ROOT.gPad.SetGridy(1)
+    ROOT.gPad.SetGridx(1)
+    ROOT.gPad.Update()
+
+    for can in cans:
+        can.Print(can.GetName() + '.pdf')
+        can.Print(can.GetName() + '.png')
     
     ROOT.gApplication.Run()
     return
