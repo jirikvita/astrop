@@ -41,7 +41,6 @@ def ReadData(fname = 'file.txt', npow = 3):
         iline = iline + 1
         if line[0] == '#' or iline == 0:
             continue
-        #  \pm stat dex [km-2 yr-1 sr-1 eV-1]
 
         tokens = line.split(',')
         R1,R2,N,pb,pb_stat,pb_syst,pb_over_p,pb_over_p_stat,pb_over_p_syst = float(tokens[0]),float(tokens[1]),float(tokens[2]),float(tokens[3]),float(tokens[4]),float(tokens[5]),float(tokens[6]),float(tokens[7]),float(tokens[8])
@@ -114,8 +113,7 @@ def main(argv):
     ax.semilogy(x, y, color='red', lw=2, marker='o', ls='solid')
     #ax.loglog(x, y, color='red', lw=2)
     i = 0
-    ax.set(xlabel='R [GV]', ylabel='flux [..]',
-           title='AMS data')
+    ax.set(xlabel='R [GV]', ylabel='flux [..]', title='AMS antiproton flux data')
     #ax.set_yscale('log')
 
 
@@ -133,16 +131,15 @@ def main(argv):
     ax.semilogy(xx, yy - np.sqrt(np.power(eyy,2) + np.power(esyy, 2)), color='red', lw=1, ls='dotted')
     
 
-    
-    params = curve_fit(fit_func, xx, yy, sigma = eyy)
-    a, b = params[0]
-    print(a,b)
-
+    # fit parameters and fit covariance matrix:
+    popt, pcov = curve_fit(fit_func, xx, yy, sigma = eyy)
+    a, b = popt
+    print(a,b, pcov)
 
     yfit = [ fit_func(xi, a, b) for xi in x[i1:]]
     yyfit = np.array(yfit)
-    ax.semilogy(xx, yyfit, color='blue', lw=1)
-
+    ax.semilogy(xx, yyfit, color='blue', lw=1, label='fit: a=%5.3f, b=%5.3f' % tuple(popt) )
+    plt.legend()
     
     # https://www.statology.org/chi-square-goodness-of-fit-test-python/
     chi2test = stats.chisquare(f_obs=yy, f_exp=yyfit)
@@ -150,6 +147,7 @@ def main(argv):
     
     ax.grid()
     plt.savefig('ams_{}.png'.format(i))
+    plt.savefig('ams_{}.pdf'.format(i))
     plt.show()
 
 
