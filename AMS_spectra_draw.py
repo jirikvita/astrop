@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # Tue 9 Nov 2021
 
 # more tutorials:
@@ -13,6 +13,9 @@ import scipy.stats as stats
 
 import numpy as np
 
+
+##########################################
+
 from scipy.optimize import curve_fit
 
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
@@ -20,13 +23,13 @@ from scipy.optimize import curve_fit
 def fit_func(x, a, b):
     return a*np.power(x,b)
 
-
-
+##########################################
 
 import matplotlib.pyplot as plt
 
 from collections import OrderedDict
 
+##########################################
 
 def ReadData(fname = 'file.txt', npow = 3):
     infile = open(fname, 'r')
@@ -43,12 +46,14 @@ def ReadData(fname = 'file.txt', npow = 3):
             continue
 
         tokens = line.split(',')
+        R1 = float(tokens[0])
         R1,R2,N,pb,pb_stat,pb_syst,pb_over_p,pb_over_p_stat,pb_over_p_syst = float(tokens[0]),float(tokens[1]),float(tokens[2]),float(tokens[3]),float(tokens[4]),float(tokens[5]),float(tokens[6]),float(tokens[7]),float(tokens[8])
-        Phi = 1.*pb
         R = 0.5 * (R2+R1)
-        print(R, Phi)
+        print((R, pb))
         x.append(R)
-        y.append(Phi)
+        # try: y.append(1.*pb_over_p)
+        # was: 
+        y.append(pb)
         ex.append(0.)
         ey.append(1.*pb_stat)
         esy.append(1.*pb_syst)
@@ -69,7 +74,7 @@ def main(argv):
     ### https://docs.python.org/3.1/library/getopt.html
     gBatch = False
     gTag=''
-    print(argv[1:])
+    print((argv[1:]))
     try:
         # options that require an argument should be followed by a colon (:).
         opts, args = getopt.getopt(argv[2:], 'hbt:', ['help','batch','tag='])
@@ -80,21 +85,21 @@ def main(argv):
     except getopt.GetoptError:
         print('Parsing...')
         print ('Command line argument error!')
-        print('{:} [ -h -b --batch -tTag --tag="MyCoolTag"]]'.format(argv[0]))
+        print(('{:} [ -h -b --batch -tTag --tag="MyCoolTag"]]'.format(argv[0])))
         sys.exit(2)
     for opt,arg in opts:
-        print('Processing command line option {} {}'.format(opt,arg))
+        print(('Processing command line option {} {}'.format(opt,arg)))
         if opt == '-h':
-            print('{:} [ -h -b --batch -tTag --tag="MyCoolTag"]'.format(argv[0]))
+            print(('{:} [ -h -b --batch -tTag --tag="MyCoolTag"]'.format(argv[0])))
             sys.exit()
         elif opt in ("-b", "--batch"):
             gBatch = True
         elif opt in ("-t", "--tag"):
             gTag = arg
-            print('OK, using user-defined histograms tag for output pngs {:}'.format(gTag,) )
+            print(('OK, using user-defined histograms tag for output pngs {:}'.format(gTag,) ))
 
     print('*** Settings:')
-    print('tag={:}, batch={:}'.format(gTag, gBatch))
+    print(('tag={:}, batch={:}'.format(gTag, gBatch)))
 
 
     fname = 'ams_data/table-smi.csv'
@@ -116,7 +121,7 @@ def main(argv):
     ax.set(xlabel='R [GV]', ylabel='flux [..]', title='AMS antiproton flux data')
     #ax.set_yscale('log')
 
-
+    # initial index for the beginning of the fit:
     i1 = int(len(x)/3)
     xx = np.array(x[i1:])
     yy = np.array(y[i1:])
@@ -134,7 +139,7 @@ def main(argv):
     # fit parameters and fit covariance matrix:
     popt, pcov = curve_fit(fit_func, xx, yy, sigma = eyy)
     a, b = popt
-    print(a,b, pcov)
+    print((a,b, pcov))
 
     yfit = [ fit_func(xi, a, b) for xi in x[i1:]]
     yyfit = np.array(yfit)
@@ -142,8 +147,8 @@ def main(argv):
     plt.legend()
     
     # https://www.statology.org/chi-square-goodness-of-fit-test-python/
-    chi2test = stats.chisquare(f_obs=yy, f_exp=yyfit)
-    print(chi2test)
+    #chi2test = stats.chisquare(f_obs=yy, f_exp=yyfit)
+    #print(chi2test)
     
     ax.grid()
     plt.savefig('ams_{}.png'.format(i))

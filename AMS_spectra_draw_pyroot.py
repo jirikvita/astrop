@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Tue 9 Nov 2021
 
-from __future__ import print_function
+
 
 #
 # 
@@ -96,7 +96,7 @@ def main(argv):
     can = ROOT.TCanvas(canname, canname, 0, 0, cw, ch)
     cans.append(can)
     #filename = 'foo.root'
-    #rfile = ROOT.TFile(filename, 'read')
+    #rfile = ROOT.TFile(filename, 'r')
     #hname = 'histo_h'
     #h1 = rfile.Get(hname)
     #stuff.append(h1)
