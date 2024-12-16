@@ -5,6 +5,7 @@ import numpy as np
 # Petr Baron
 # according to https://arxiv.org/pdf/2008.06486.pdf
 
+
 matrix = np.array([[0.244  , 0.127  , 0.038  , 0.008  , 0.001  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0. , 0.  , 0. ],
                    [0.237  , 0.310  , 0.165  , 0.048  , 0.008  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.],
                    [0.051  , 0.260  , 0.368  , 0.204  , 0.053  , 0.006  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.],
@@ -40,28 +41,40 @@ print(rev_matrix)
 import ROOT as ROOT
 import array as array
 
-bins = [18.05, 18.15, 18.25, 18.35, 18.45, 18.55, 18.65, 18.75, 18.85, 18.95, 
-        19.05, 19.15, 19.25, 19.35, 19.45, 19.55, 19.65, 19.75, 19.85, 19.95, 
-        20.05, 20.15, 20.25, 20.35, 20.45]
+bins = [18.0, 18.1, 18.2, 18.3, 18.4, 18.5, 18.6, 18.7, 18.8, 18.9, 
+        19.0, 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7, 19.8, 19.9, 
+        20.0, 20.1, 20.2, 20.3, 20.4, 20.5]
 n_bins = len(bins) - 1 
 
 
 r_matrix = ROOT.TH2D("astro_matrix", "astro_matrix", n_bins, array.array('d', bins), n_bins, array.array('d', bins))
 
+b=[]
 for i in range(len(matrix[0])):
+    a=[]
     for j in range(len(matrix[1])):    
-        r_matrix.SetBinContent(i+1,j+1,matrix[j][i])
+        r_matrix.SetBinContent(j+1,i+1,matrix[j][i])
+        a.append(matrix[j][i])
+    b.append(a)
 
-bins = [18.45, 18.55, 18.65, 18.75, 18.85, 18.95, 
-        19.05, 19.15, 19.25, 19.35, 19.45, 19.55, 19.65, 19.75, 19.85, 19.95, 
-        20.05, 20.15, 20.25, 20.35]
+b=np.array(b)
+
+bins = [18.4, 18.5, 18.6, 18.7, 18.8, 18.9, 
+        19.0, 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7, 19.8, 19.9, 
+        20.0, 20.1, 20.2, 20.3, 20.4]
 n_bins = len(bins) - 1 
 
 r_matrix_short = ROOT.TH2D("astro_matrix_short", "astro_matrix_short", n_bins, array.array('d', bins), n_bins, array.array('d', bins))
 
-for i in range(len(matrix[0])-6):
-    for j in range(len(matrix[1])-6):    
-        r_matrix_short.SetBinContent(i+1,j+1,matrix[j+4][i+4])
+c=[]
+for i in range(len(matrix[0])-5):
+    a=[]
+    for j in range(len(matrix[1])-5):    
+        r_matrix_short.SetBinContent(j+1,i+1,matrix[j+4][i+4])
+        a.append(matrix[j+4][i+4])
+    c.append(a)
+
+c=np.array(c)
 
 r_N      = ROOT.TH1D("N", "N", n_bins,  array.array('d', bins))
 r_Ncorr  = ROOT.TH1D("Ncorr", "Ncorr", n_bins,  array.array('d', bins))
@@ -73,11 +86,33 @@ for i in range(len(matrix[0])-6):
     r_N.SetBinContent(i+1, N[i])
     r_Ncorr.SetBinContent(i+1, Ncorr[i])
 
+print("")
+print(matrix)
+print("")
+print(b[::-1])
+print("")
+print(c[::-1])
+
+astro_matrix_short_nooverflow = r_matrix_short.Clone("astro_matrix_short_nooverflow")
+
+r_matrix_short.SetBinContent(21,20,0.094)
+r_matrix_short.SetBinContent(0,1,0.23+0.053+0.008+0.001)
+r_matrix_short.SetBinContent(0,2,0.053)
+r_matrix_short.SetBinContent(0,3,0.004)
+
+r_N_overflow     = r_N.Clone("N_overflow")
+r_Ncorr_overflow = r_Ncorr.Clone("Ncorr_overflow")
+
+r_N_overflow.SetBinContent(0,83143)
+r_Ncorr_overflow.SetBinContent(0,76176)
+
 rfile = ROOT.TFile("astro.root", "recreate")
 rfile.cd()
 r_matrix.Write()
 r_matrix_short.Write()
+astro_matrix_short_nooverflow.Write()
 r_N.Write()
 r_Ncorr.Write()
-
-print('Done creating the ROOT file!')
+r_N_overflow.Write()
+r_Ncorr_overflow.Write()
+rfile.Close()
